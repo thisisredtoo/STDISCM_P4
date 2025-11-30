@@ -1,0 +1,39 @@
+// Version to use
+syntax = "proto3";
+
+// Name of server/service
+service HelloGRPC{
+	// Will create a SayHello call
+	// Takes in a HelloRequest message
+	// Returns a HelloReply message to the client
+	rpc SayHello (HelloRequest) returns (HelloReply) {}
+	
+	rpc StreamSong(stream SongRequest) returns (stream Song){}
+}
+
+
+// Below are the respective structures / message and Contents that the servie above will use
+
+// Contents of HelloRequest
+message HelloRequest{
+	// Will contain the sender's name'
+	string name = 1;
+}
+
+message HelloReply{
+	// Sample status of reply
+	bool status = 1;
+	// Contains message of the reply
+	string message = 2;
+	// Next variable is 3
+}
+//----------------------------------------------
+message Song{
+	string title = 1;
+	string artist = 2;
+	string songURL = 3;
+}
+
+message SongRequest{
+	repeated string id = 1;
+}

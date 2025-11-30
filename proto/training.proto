@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+service Training {
+	rpc TrainingStatusUpdate (TrainingStatus) returns (TrainingUpdateReply);
+	rpc TrainingMetricsUpdate (TrainingMetrics) returns (TrainingUpdateReply);
+}
+
+message TrainingStatus {
+	bool isTraining = 1;
+	string statusMessage = 2;
+}
+
+message TrainingMetrics {
+	float currentLoss = 1;
+	float currentIteration = 2;
+}
+
+message TrainingUpdateReply {
+	bool status = 1;
+	string message = 2;
+	int32 errorCode = 3;
+}
