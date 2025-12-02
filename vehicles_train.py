@@ -314,15 +314,35 @@ channel = grpc.insecure_channel("localhost:50051")
 dashboard_stub = dashboard_pb2_grpc.DashboardStub(channel)
 training_stub = training_pb2_grpc.TrainingStub(channel)
 
+def handleError(fn, *args, **kwargs):
+    try:
+        return fn(*args, **kwargs)
+    except grpc.RpcError as e:
+        print("[WARNING] RPC failed, retrying in 2 seconds...", e)
+        time.sleep(2)
+
+        # Reconnect the channel
+        global channel, dashboard_stub, training_stub
+        channel = grpc.insecure_channel("localhost:50051")
+        dashboard_stub = dashboard_pb2_grpc.DashboardStub(channel)
+        training_stub = training_pb2_grpc.TrainingStub(channel)
+
+        try:
+            return fn(*args, **kwargs)
+        except grpc.RpcError as e2:
+            print("[ERROR] RPC failed twice. Skipping this update.")
+            return None
+
 
 def send_loss_update(loss_value, iteration):
-    try:
-        dashboard_stub.SendLossUpdate(dashboard_pb2.LossUpdate(
+    handleError(
+        dashboard_stub.SendLossUpdate,
+        dashboard_pb2.LossUpdate(
             lossValue=float(loss_value),
             iteration=iteration
-        ))
-    except grpc.RpcError as e:
-        print("gRPC LossUpdate error:", e)
+        )
+    )
+
 
 def send_batch_update(images, predictions, ground_truths, index=0):
     try:
@@ -354,6 +374,8 @@ def send_training_metrics(iteration, loss_value):
         ))
     except grpc.RpcError as e:
         print("gRPC TrainingMetrics error:", e)
+
+
 
 send_training_status(True, "Started MobileNetV2 training")
 
