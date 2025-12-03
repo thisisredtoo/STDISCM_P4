@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import dashboard_pb2 as dashboard__pb2
+from . import dashboard_pb2 as dashboard__pb2
 
 GRPC_GENERATED_VERSION = '1.76.0'
 GRPC_VERSION = grpc.__version__

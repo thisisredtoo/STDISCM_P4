@@ -56,10 +56,10 @@ import grpc
 from concurrent import futures
 import time
 
-import dashboard_pb2
-import dashboard_pb2_grpc
-import training_pb2
-import training_pb2_grpc
+from backend.grpc_stubs import dashboard_pb2
+from backend.grpc_stubs import dashboard_pb2_grpc
+from backend.grpc_stubs import training_pb2
+from backend.grpc_stubs import training_pb2_grpc
 
 # Shared state
 latest_batch = None

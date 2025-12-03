@@ -10,10 +10,10 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import classification_report
 
-import dashboard_pb2
-import dashboard_pb2_grpc
-import training_pb2
-import training_pb2_grpc
+from backend.grpc_stubs import dashboard_pb2
+from backend.grpc_stubs import dashboard_pb2_grpc
+from backend.grpc_stubs import training_pb2
+from backend.grpc_stubs import training_pb2_grpc
 
 # ----------------------------
 # gRPC client setup
