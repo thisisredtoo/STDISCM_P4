@@ -5,6 +5,18 @@ service Training {
 	rpc TrainingMetricsUpdate (TrainingMetrics) returns (TrainingUpdateReply);
 }
 
+service TrainingControl {
+  rpc Pause(Empty) returns (Empty);
+  rpc Resume(Empty) returns (Empty);
+  rpc SetDelay(Delay) returns (Empty);
+}
+
+message Empty {}
+
+message Delay {
+	int32 ms = 1; 
+}
+
 message TrainingStatus {
 	bool isTraining = 1;
 	string statusMessage = 2;

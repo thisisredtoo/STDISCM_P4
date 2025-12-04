@@ -138,3 +138,161 @@ class Training(object):
             timeout,
             metadata,
             _registered_method=True)
+
+
+class TrainingControlStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.Pause = channel.unary_unary(
+                '/TrainingControl/Pause',
+                request_serializer=training__pb2.Empty.SerializeToString,
+                response_deserializer=training__pb2.Empty.FromString,
+                _registered_method=True)
+        self.Resume = channel.unary_unary(
+                '/TrainingControl/Resume',
+                request_serializer=training__pb2.Empty.SerializeToString,
+                response_deserializer=training__pb2.Empty.FromString,
+                _registered_method=True)
+        self.SetDelay = channel.unary_unary(
+                '/TrainingControl/SetDelay',
+                request_serializer=training__pb2.Delay.SerializeToString,
+                response_deserializer=training__pb2.Empty.FromString,
+                _registered_method=True)
+
+
+class TrainingControlServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def Pause(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Resume(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SetDelay(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_TrainingControlServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'Pause': grpc.unary_unary_rpc_method_handler(
+                    servicer.Pause,
+                    request_deserializer=training__pb2.Empty.FromString,
+                    response_serializer=training__pb2.Empty.SerializeToString,
+            ),
+            'Resume': grpc.unary_unary_rpc_method_handler(
+                    servicer.Resume,
+                    request_deserializer=training__pb2.Empty.FromString,
+                    response_serializer=training__pb2.Empty.SerializeToString,
+            ),
+            'SetDelay': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetDelay,
+                    request_deserializer=training__pb2.Delay.FromString,
+                    response_serializer=training__pb2.Empty.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'TrainingControl', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('TrainingControl', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class TrainingControl(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def Pause(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/TrainingControl/Pause',
+            training__pb2.Empty.SerializeToString,
+            training__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Resume(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/TrainingControl/Resume',
+            training__pb2.Empty.SerializeToString,
+            training__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SetDelay(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/TrainingControl/SetDelay',
+            training__pb2.Delay.SerializeToString,
+            training__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)

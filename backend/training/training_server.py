@@ -8,7 +8,7 @@ _pause = threading.Event()
 _pause.set()  # start as running
 _delay_ms = 0
 
-class TrainingControl(training_pb2_grpc.TrainingControlServicer):
+class TrainingControl(training_pb2_grpc.TrainingServicer):
   def Pause(self, request, context):
     _pause.clear()
     return training_pb2.Empty()
@@ -34,7 +34,7 @@ def maybe_delay():
 
 def serve():
   server = grpc.server(futures.ThreadPoolExecutor(max_workers=8))
-  training_pb2_grpc.add_TrainingControlServicer_to_server(TrainingControl(), server)
+  training_pb2_grpc.add_TrainingServicer_to_server(TrainingControl(), server)
   server.add_insecure_port("[::]:50051")
   server.start()
   server.wait_for_termination()

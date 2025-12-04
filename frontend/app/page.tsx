@@ -8,6 +8,7 @@ import { pushLoss } from "./components/utils";
 import FPSMeter from "./components/FPSMeter";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws";
+const GATEWAY_HTTP = process.env.NEXT_PUBLIC_GATEWAY_HTTP || "http://localhost:8000";
 
 export default function Page() {
   const { connected, onBatch } = useRealtime(WS_URL);
@@ -35,8 +36,12 @@ export default function Page() {
   }), [onBatch]);
 
   const postRPC = async (body: any) => {
-    await fetch("/rpc", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  };
+  await fetch(`${GATEWAY_HTTP}/rpc`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+};
 
   return (
     <main className="p-4 space-y-4">
