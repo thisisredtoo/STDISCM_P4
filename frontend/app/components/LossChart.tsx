@@ -3,7 +3,6 @@ import React from "react";
 import { Line } from "react-chartjs-2";
 import { Chart, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler } from "chart.js";
 
-// Register the necessary chart elements for Chart.js
 Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
 const LossChart = ({ points }: { points: [number, number][] }) => {
@@ -14,7 +13,7 @@ const LossChart = ({ points }: { points: [number, number][] }) => {
         label: "Loss",
         data: points.map(([, loss]) => loss),
         fill: false,
-        borderColor: "white",  // Custom color
+        borderColor: "white",  
         tension: 0.1,
         pointRadius: 0,
         borderWidth: 2,
@@ -25,7 +24,7 @@ const LossChart = ({ points }: { points: [number, number][] }) => {
   const options = {
     responsive: true,
     animation: {
-      duration: 0,  // Disable animation by setting duration to 0
+      duration: 0, 
     },
     scales: {
       x: { ticks: { maxTicksLimit: 8 } },

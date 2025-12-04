@@ -37,7 +37,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-// Import Geist fonts via @fontsource
 import "@fontsource/geist/400.css";
 import "@fontsource/geist/700.css";
 import "@fontsource/geist-mono/400.css";

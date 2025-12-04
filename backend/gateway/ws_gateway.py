@@ -5,10 +5,8 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-# Shared broadcaster (used by gRPC services)
 from backend.gateway.publisher import broadcaster
 
-# Optional gRPC control
 try:
     import grpc
     from backend.grpc_stubs import training_pb2, training_pb2_grpc
@@ -42,11 +40,10 @@ async def ws_endpoint(ws: WebSocket):
         while True:
             msg = await ws.receive_text()
             data = json.loads(msg)
-            print("Received message:", data)  # Log incoming messages for debugging
+            print("Received message:", data)  
 
-            # Broadcasting the loss data
             if data.get("type") == "loss":
-                print("Broadcasting loss data:", data["payload"])  # Log loss data being broadcast
+                print("Broadcasting loss data:", data["payload"])
 
             await ws.send_text(msg)
     except WebSocketDisconnect:

@@ -5,7 +5,6 @@ import grpc
 from backend.grpc_stubs import dashboard_pb2, dashboard_pb2_grpc
 from backend.gateway.publisher import broadcaster
 
-
 class DashboardServicer(dashboard_pb2_grpc.DashboardServicer):
     async def SendBatchUpdate(self, request, context):
         try:

@@ -11,7 +11,6 @@ def select_16(images_hwc: np.ndarray, y_true: np.ndarray, y_pred: np.ndarray) ->
     if n >= 16:
         idx = sorted(random.sample(range(n), 16))
         return images_hwc[idx], y_true[idx], y_pred[idx]
-    # n < 16 → repeat
     reps = (16 + n - 1) // n
     img = np.concatenate([images_hwc]*reps, axis=0)[:16]
     yt  = np.concatenate([y_true]*reps, axis=0)[:16]

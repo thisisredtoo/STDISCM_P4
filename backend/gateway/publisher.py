@@ -19,7 +19,6 @@ class Broadcaster:
         await ws.accept()
         async with self._lock:
             self._subs.add(ws)
-            # light replay
             for msg in list(self._ring)[-self._replay_on_join:]:
                 await ws.send_text(msg)
 
@@ -40,5 +39,4 @@ class Broadcaster:
             for d in dead:
                 self._subs.discard(d)
 
-# Singleton broadcaster used by gRPC servicers and the WS app
 broadcaster = Broadcaster()
