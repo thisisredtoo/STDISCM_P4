@@ -46,59 +46,35 @@
 
 
 "use client";
-import React, { useMemo, useState, useEffect } from "react";
-import { Line } from "react-chartjs-2";
-import { Chart, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler } from "chart.js";
-
-// Register Chart.js components
-Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
+import React, { useEffect, useState } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 export default function LossChart({ points }: { points: [number, number][] }) {
-  console.log("Points received in LossChart:", points);  // Log the points received
-
-  const [chartData, setChartData] = useState<{ x: number; y: number }[]>([]);
+  const [chartData, setChartData] = useState<{ iteration: number; loss: number }[]>([]);
 
   useEffect(() => {
     if (points.length > 0) {
-      console.log("Updating chart data with points:", points);  // Log points before updating
+      // Append new loss point to chart data
       setChartData((prevData) => {
-        const newData = [...prevData, { x: points[0][0], y: points[0][1] }];
+        const newData = [...prevData, { iteration: points[0][0], loss: points[0][1] }];
         return newData.length > 500 ? newData.slice(-500) : newData; // Keep only the last 500 points
       });
     }
-  }, [points]); // When points change, update chartData
-
-  const data = useMemo(() => ({
-    datasets: [{
-      label: "Loss",
-      data: chartData,
-      fill: false,
-      tension: 0.4,  // Controls line smoothness
-      pointRadius: 3,
-      borderWidth: 4,
-      borderColor: "rgba(75, 192, 192, 1)",
-      pointBackgroundColor: "rgba(75, 192, 192, 1)",
-    }]
-  }), [chartData]);  // Re-render chart when chartData updates
-
-  const options: any = {
-    responsive: true,
-    animation: false,
-    parsing: false,
-    maintainAspectRatio: false,
-    scales: {
-      x: { type: 'linear', position: 'bottom', title: { text: 'Iteration', display: true } },
-      y: { title: { text: 'Loss', display: true }, beginAtZero: false }
-    },
-    plugins: {
-      legend: { display: false },
-      tooltip: { intersect: false, mode: "index" }
-    }
-  };
+  }, [points]); // Whenever `points` change, update chart data
 
   return (
-    <div className="h-64 border border-black rounded-md p-2">
-      <Line data={data} options={options} />
+    <div className="h-96 w-full border border-black rounded-md p-2">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="iteration" label={{ value: "Iteration", position: "insideBottom" }} />
+          <YAxis label={{ value: "Loss", angle: -90, position: "insideLeft" }} />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="loss" stroke="#8884d8" activeDot={{ r: 8 }} />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 }
+
