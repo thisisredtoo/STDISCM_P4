@@ -25,4 +25,4 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.pixelated { image-rendering: pixelated; }
+.pixelated { image-rendering: crisp-edges; image-rendering: pixelated; }

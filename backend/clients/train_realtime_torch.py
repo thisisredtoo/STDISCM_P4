@@ -110,3 +110,66 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# # backend/clients/train_demo.py
+# import asyncio
+# import numpy as np
+# import requests
+# from backend.clients._helpers import to_names, make_image_msgs, serialize_image_msgs
+
+# DISPLAY_TILE_COUNT = 16  # exactly 16 tiles per spec
+# BATCH_INTERVAL = 0.2     # seconds between fake batches
+# TOTAL_BATCHES = 50       # how many fake batches to send
+# LOSS_START = 1.0
+# LOSS_DECAY = 0.95        # exponential decay per batch
+
+# WS_PUBLISH_URL = "http://localhost:8000/publish"
+
+# def send_batch_ws(idx, images, y_true_idx, y_pred_idx):
+#     payload = {
+#         "type": "batch",
+#         "index": idx,
+#         "images": serialize_image_msgs(make_image_msgs(images)),
+#         "predictions": to_names(y_pred_idx),
+#         "groundTruths": to_names(y_true_idx),
+#     }
+#     try:
+#         requests.post(WS_PUBLISH_URL, json=payload)
+#     except Exception as e:
+#         print("Failed to send batch:", e)
+
+# def send_loss_ws(iteration, loss):
+#     payload = {"type": "loss", "iteration": iteration, "lossValue": loss}
+#     try:
+#         requests.post(WS_PUBLISH_URL, json=payload)
+#     except Exception as e:
+#         print("Failed to send loss:", e)
+
+# def generate_fake_batch():
+#     # generate random images (HWC uint8) and labels
+#     images = (np.random.rand(DISPLAY_TILE_COUNT, 32, 32, 3) * 255).astype(np.uint8)
+#     labels = np.random.randint(0, 10, size=(DISPLAY_TILE_COUNT,))
+#     preds  = np.random.randint(0, 10, size=(DISPLAY_TILE_COUNT,))
+#     return images, labels, preds
+
+# async def main():
+#     print("Demo training started...")
+#     loss = LOSS_START
+#     for i in range(1, TOTAL_BATCHES + 1):
+#         images, y_true, y_pred = generate_fake_batch()
+#         send_batch_ws(i, images, y_true, y_pred)
+#         send_loss_ws(i, loss)
+#         print(f"Sent batch {i}, loss {loss:.4f}")
+#         loss *= LOSS_DECAY
+#         await asyncio.sleep(BATCH_INTERVAL)
+#     # final status
+#     payload = {"type": "status", "isTraining": False, "statusMessage": "Demo finished"}
+#     try:
+#         requests.post(WS_PUBLISH_URL, json=payload)
+#     except:
+#         pass
+#     print("Demo training finished.")
+
+# if __name__ == "__main__":
+#     asyncio.run(main())
+

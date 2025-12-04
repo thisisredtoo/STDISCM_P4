@@ -23,17 +23,23 @@ export default function Page() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
+
   useEffect(() => onBatch((batch) => {
     for (const msg of batch) {
+      console.log("Batch message:", msg);  // Debug incoming message
       switch (msg.type) {
         case "images": viewRef.current.images = msg.payload; break;
         case "labels": viewRef.current.labels = msg.payload; break;
-        case "preds":  viewRef.current.preds = msg.payload; break;
-        case "loss":   pushLoss(viewRef.current.loss, msg.payload); break;
-        default: break; // ignore unknown types
+        case "preds": viewRef.current.preds = msg.payload; break;
+        case "loss":
+          console.log("Received loss data:", msg.payload);  // Debug loss payload
+          pushLoss(viewRef.current.loss, msg.payload); // Check if this is updating correctly
+          break;
+        default: break;
       }
     }
   }), [onBatch]);
+  
 
   const postRPC = async (body: any) => {
   await fetch(`${GATEWAY_HTTP}/rpc`, {
@@ -48,23 +54,25 @@ export default function Page() {
       <header className="flex items-center gap-3">
         <h1 className="text-xl font-semibold">Training Dashboard</h1>
         <span className={"text-xs px-2 py-1 rounded " + (connected ? "bg-green-600" : "bg-red-600")}>{connected ? "connected" : "disconnected"}</span>
-        <div className="ml-auto flex gap-2">
+        {/* <div className="ml-auto flex gap-2">
           <button onClick={() => postRPC({ type: "pause" })} className="px-3 py-1 rounded bg-neutral-800">Pause</button>
           <button onClick={() => postRPC({ type: "resume" })} className="px-3 py-1 rounded bg-neutral-800">Resume</button>
           <button onClick={() => postRPC({ type: "delay", ms: 300 })} className="px-3 py-1 rounded bg-neutral-800">Delay 300ms</button>
           <button onClick={() => postRPC({ type: "delay", ms: 0 })} className="px-3 py-1 rounded bg-neutral-800">No delay</button>
-        </div>
-        <FPSMeter key={tick} />
+        </div> */}
+        {/* <FPSMeter key={tick} /> */}
+        <FPSMeter />
       </header>
 
       <div className="grid grid-cols-2 gap-6">
         <div>
           <ImageGrid title="Images" images={viewRef.current.images} />
-          <LabelGrid title="Ground Truth" items={viewRef.current.labels} />
-        </div>
-        <div>
           <LabelGrid title="Predictions" items={viewRef.current.preds} />
-          <section className="mt-4">
+          <LabelGrid title="Ground Truth" items={viewRef.current.labels} />
+          
+        </div>
+        <div> 
+          <section className="mt-4 ml-10">
             <h3 className="text-sm font-medium mb-2">Loss</h3>
             <LossChart points={viewRef.current.loss} />
           </section>
@@ -73,3 +81,129 @@ export default function Page() {
     </main>
   );
 }
+
+// "use client";
+// import React, { useEffect, useRef, useState } from "react";
+// import ImageGrid from "./components/ImageGrid";
+// import LabelGrid from "./components/LabelGrid";
+// import LossChart from "./components/LossChart";
+// import { useRealtime } from "./hooks/useRealtime";
+// import FPSMeter from "./components/FPSMeter";
+
+// const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws";
+// const GATEWAY_HTTP = process.env.NEXT_PUBLIC_GATEWAY_HTTP || "http://localhost:8000";
+
+// export default function Page() {
+//   const { connected, onBatch } = useRealtime(WS_URL);
+
+//   // --- UI STATE ---
+//   const [images, setImages] = useState<string[]>([]);
+//   const [labels, setLabels] = useState<(string | number)[]>([]);
+//   const [preds, setPreds] = useState<(string | number)[]>([]);
+//   const [loss, setLoss] = useState<[number, number][]>([]);
+
+//   // --- LOSS STREAMING BUFFER ---
+//   const lossBufRef = useRef<[number, number][]>([]);
+//   const rafPendingRef = useRef(false);
+//   const MAX_POINTS = 500;
+
+//   useEffect(() => {
+//     return onBatch((batch) => {
+//       let gotLoss = false;
+
+//       for (const msg of batch) {
+//         switch (msg.type) {
+//           case "images":
+//             setImages(msg.payload);
+//             break;
+
+//           case "labels":
+//             setLabels(msg.payload);
+//             break;
+
+//           case "preds":
+//             setPreds(msg.payload);
+//             break;
+
+//           case "loss":
+//             if (
+//               Array.isArray(msg.payload) &&
+//               msg.payload.length === 2 &&
+//               typeof msg.payload[1] === "number"
+//             ) {
+//               lossBufRef.current.push(msg.payload);
+//               gotLoss = true;
+//             }
+//             break;
+
+//           default:
+//             break;
+//         }
+//       }
+
+//       // Flush buffered loss data once per animation frame
+//       if (gotLoss && !rafPendingRef.current) {
+//         rafPendingRef.current = true;
+
+//         requestAnimationFrame(() => {
+//           rafPendingRef.current = false;
+
+//           if (lossBufRef.current.length) {
+//             setLoss((prev) => {
+//               const merged = [...prev, ...lossBufRef.current];
+//               lossBufRef.current = [];
+//               return merged.slice(-MAX_POINTS); // Keep only the last MAX_POINTS
+//             });
+//           }
+//         });
+//       }
+//     });
+//   }, [onBatch]);
+
+//   const postRPC = async (body: any) => {
+//     await fetch(`${GATEWAY_HTTP}/rpc`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify(body),
+//     });
+//   };
+
+//   return (
+//     <main className="p-4 space-y-4">
+//       {/* HEADER */}
+//       <header className="flex items-center gap-3">
+//         <h1 className="text-xl font-semibold">Training Dashboard</h1>
+
+//         <span
+//           className={
+//             "text-xs px-2 py-1 rounded " +
+//             (connected ? "bg-green-600" : "bg-red-600")
+//           }
+//         >
+//           {connected ? "connected" : "disconnected"}
+//         </span>
+
+//         <FPSMeter />
+//       </header>
+
+//       {/* MAIN CONTENT */}
+//       <div className="grid grid-cols-2 gap-6">
+
+//         {/* LEFT: IMAGES + LABELS */}
+//         <div>
+//           <ImageGrid title="Images" images={images} />
+//           <LabelGrid title="Predictions" items={preds} />
+//           <LabelGrid title="Ground Truth" items={labels} />
+//         </div>
+
+//         {/* RIGHT: LOSS PLOT */}
+//         <div>
+//           <section className="mt-4 ml-10">
+//             <h3 className="text-sm font-medium mb-2">Loss</h3>
+//             <LossChart points={loss} />
+//           </section>
+//         </div>
+//       </div>
+//     </main>
+//   );
+// }

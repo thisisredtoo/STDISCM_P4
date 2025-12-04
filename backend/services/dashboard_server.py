@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-"""
-ML Training Dashboard Server (Headless gRPC → WS bridge)
-- Implements Dashboard gRPC service using grpc.aio
-- Forwards updates to the FastAPI WebSocket gateway (publisher/broadcaster)
-- No GUI / Tk dependencies
-"""
-
 import asyncio
 import base64
 import grpc
@@ -15,56 +7,49 @@ from backend.gateway.publisher import broadcaster
 
 
 class DashboardServicer(dashboard_pb2_grpc.DashboardServicer):
-    """
-    Receives training updates via gRPC and relays them to the WebSocket broadcaster.
-    """
+    async def SendBatchUpdate(self, request, context):
+        try:
+            images = [
+                "data:image/jpeg;base64," + base64.b64encode(img.image).decode()
+                for img in request.images
+            ][:16]
 
-    async def SendBatchUpdate(self, request: dashboard_pb2.BatchUpdate, context):
-        # Convert raw bytes → data URLs for the browser
-        images = [
-            "data:image/jpeg;base64," + base64.b64encode(img.image).decode()
-            for img in request.images
-        ]
-        payload = {
-            "type": "batch",
-            "index": int(request.index),
-            "images": images[:16],                       # enforce 16 tiles
-            "y_pred": list(request.predictions)[:16],
-            "y_true": list(request.groundTruths)[:16],
-        }
-        await broadcaster.publish_json(payload)
-        return dashboard_pb2.UpdateReply(status=True, message="ok", errorCode=0)
+            labels = list(request.groundTruths)[:16]
+            preds = list(request.predictions)[:16]
 
-    async def SendLossUpdate(self, request: dashboard_pb2.LossUpdate, context):
-        payload = {
-            "type": "loss",
-            "iteration": int(request.iteration),
-            "loss": float(request.lossValue),
-        }
-        await broadcaster.publish_json(payload)
-        return dashboard_pb2.UpdateReply(status=True, message="ok", errorCode=0)
+            await broadcaster.publish_json({"type": "images", "payload": images})
+            await broadcaster.publish_json({"type": "labels", "payload": labels})
+            await broadcaster.publish_json({"type": "preds", "payload": preds})
+
+            print(f"[WS OK] batch idx={int(request.index)}")
+            return dashboard_pb2.UpdateReply(status=True, message="ok", errorCode=0)
+
+        except Exception as e:
+            print(f"[WS ERROR] batch: {e}")
+            return dashboard_pb2.UpdateReply(status=False, message=str(e), errorCode=1)
 
 
-async def serve(port: int = 50051) -> None:
-    """
-    Start the async gRPC server for the Dashboard service.
-    Run your WS gateway separately (or with run_all.py).
-    """
-    server = grpc.aio.server(options=[
-        ('grpc.max_send_message_length', 50 * 1024 * 1024),
-        ('grpc.max_receive_message_length', 50 * 1024 * 1024),
-    ])
+    async def SendLossUpdate(self, request, context):
+        try:
+            pair = [int(request.iteration), float(request.lossValue)]
+            await broadcaster.publish_json({"type": "loss", "payload": pair})
+
+            print(f"[WS OK] loss iter={pair[0]} val={pair[1]:.6f}")
+            return dashboard_pb2.UpdateReply(status=True, message="ok", errorCode=0)
+
+        except Exception as e:
+            print(f"[WS ERROR] loss: {e}")
+            return dashboard_pb2.UpdateReply(status=False, message=str(e), errorCode=1)
+
+
+async def serve(port: int = 50051):
+    server = grpc.aio.server()
     dashboard_pb2_grpc.add_DashboardServicer_to_server(DashboardServicer(), server)
     server.add_insecure_port(f"[::]:{port}")
+
     await server.start()
     print(f"✓ Dashboard gRPC listening on :{port}")
-    try:
-        await server.wait_for_termination()
-    except (KeyboardInterrupt, asyncio.CancelledError):
-        pass
-    finally:
-        await server.stop(0)
-
+    await server.wait_for_termination()
 
 def main():
     asyncio.run(serve())
@@ -72,3 +57,63 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# backend/services/dashboard_server.py
+# import asyncio
+# import base64
+# import grpc
+
+# from backend.grpc_stubs import dashboard_pb2, dashboard_pb2_grpc
+# from backend.gateway.publisher import broadcaster
+
+
+# class DashboardServicer(dashboard_pb2_grpc.DashboardServicer):
+#     async def SendBatchUpdate(self, request: dashboard_pb2.BatchUpdate, context):
+#         try:
+#             images = [
+#                 "data:image/jpeg;base64," + base64.b64encode(img.image).decode()
+#                 for img in request.images
+#             ][:16]
+#             labels = list(request.groundTruths)[:16]
+#             preds = list(request.predictions)[:16]
+
+#             await broadcaster.publish_json({"type": "images", "payload": images})
+#             await broadcaster.publish_json({"type": "labels", "payload": labels})
+#             await broadcaster.publish_json({"type": "preds",  "payload": preds})
+
+#             print(f"[WS OK] batch idx={int(request.index)} "
+#                   f"images={len(images)} labels={len(labels)} preds={len(preds)}")
+#             return dashboard_pb2.UpdateReply(status=True, message="ok", errorCode=0)
+
+#         except Exception as e:
+#             print(f"[WS ERROR] batch idx={int(getattr(request, 'index', -1))}: {e}")
+#             return dashboard_pb2.UpdateReply(status=False, message=str(e), errorCode=1)
+
+#     async def SendLossUpdate(self, request: dashboard_pb2.LossUpdate, context):
+#         try:
+#             # EXACT format the UI expects: { type: "loss", payload: [iteration, loss] }
+#             pair = [int(request.iteration), float(request.lossValue)]
+#             await broadcaster.publish_json({"type": "loss", "payload": pair})
+
+#             print(f"[WS OK] loss iter={pair[0]} val={pair[1]:.6f}")
+#             return dashboard_pb2.UpdateReply(status=True, message="ok", errorCode=0)
+
+#         except Exception as e:
+#             print(f"[WS ERROR] loss iter={int(getattr(request, 'iteration', -1))}: {e}")
+#             return dashboard_pb2.UpdateReply(status=False, message=str(e), errorCode=1)
+
+
+# async def serve(port: int = 50051) -> None:
+#     server = grpc.aio.server(options=[
+#         ("grpc.max_send_message_length", 50 * 1024 * 1024),
+#         ("grpc.max_receive_message_length", 50 * 1024 * 1024),
+#     ])
+#     dashboard_pb2_grpc.add_DashboardServicer_to_server(DashboardServicer(), server)
+#     server.add_insecure_port(f"[::]:{port}")
+#     await server.start()
+#     print(f"✓ Dashboard gRPC listening on :{port}")
+#     await server.wait_for_termination()
+
+
+# if __name__ == "__main__":
+#     asyncio.run(serve())
