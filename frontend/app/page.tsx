@@ -1,25 +1,35 @@
+// page.tsx
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import ImageGrid from "./components/ImageGrid";
 import LabelGrid from "./components/LabelGrid";
 import LossChart from "./components/LossChart";
-import { useRealtime } from "./hooks/useRealtime";
+import { useRealtime } from "./hooks/useRealtime";  // Import the custom hook
 import FPSMeter from "./components/FPSMeter";
+
+let lastUpdateTime = 0;  // Track the last update time for throttling
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws";
 const GATEWAY_HTTP = process.env.NEXT_PUBLIC_GATEWAY_HTTP || "http://localhost:8000";
 
+// Throttled WebSocket data handler
+const handleWebSocketData = (msg: any, onMessage: (msg: any) => void) => {
+  const currentTime = Date.now();
+  if (currentTime - lastUpdateTime > 50) {  // Throttle updates to 20 FPS
+    lastUpdateTime = currentTime;
+    onMessage(msg);
+  }
+};
+
 export default function Page() {
-  const { connected, onBatch } = useRealtime(WS_URL);
+  const { connected, onBatch } = useRealtime(WS_URL);  // Use the hook
   const [tick, setTick] = useState(0);
 
-  // Initialize viewRef to store images, labels, predictions, and loss data
-  const viewRef = useRef<{ images: string[]; labels: (string | number)[]; preds: (string | number)[]; loss: [number, number][] }>({
-    images: [],
-    labels: [],
-    preds: [],
-    loss: [],
-  });
+  // States for images, labels, predictions, and loss
+  const [images, setImages] = useState<string[]>([]);
+  const [labels, setLabels] = useState<(string | number)[]>([]);
+  const [preds, setPreds] = useState<(string | number)[]>([]);
+  const [loss, setLoss] = useState<[number, number][]>([]);
 
   // Update the tick count for the FPSMeter
   useEffect(() => {
@@ -32,32 +42,35 @@ export default function Page() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Handling WebSocket data reception and updating `viewRef.current.loss`
+  // Handling WebSocket data reception and updating states
   useEffect(() => {
     onBatch((batch) => {
       for (const msg of batch) {
         console.log("Batch message:", msg);  // Log the received batch data
 
-        switch (msg.type) {
-          case "images":
-            viewRef.current.images = msg.payload;
-            break;
-          case "labels":
-            viewRef.current.labels = msg.payload;
-            break;
-          case "preds":
-            viewRef.current.preds = msg.payload;
-            break;
-          case "loss":
-            console.log("Received loss data:", msg.payload);  // Log the received loss data
-            viewRef.current.loss.push(msg.payload);  // Add the received loss data
-            break;
-          default:
-            break; // Ignore unknown message types
-        }
+        // Throttling the processing of WebSocket data updates
+        handleWebSocketData(msg, (processedData) => {
+          switch (processedData.type) {
+            case "images":
+              setImages(processedData.payload);  // Update images
+              break;
+            case "labels":
+              setLabels(processedData.payload);  // Update labels
+              break;
+            case "preds":
+              setPreds(processedData.payload);  // Update predictions
+              break;
+            case "loss":
+              console.log("Received loss data:", processedData.payload);  // Log the received loss data
+              setLoss((prevLoss) => [...prevLoss, processedData.payload]);  // Add new loss data
+              break;
+            default:
+              break; // Ignore unknown message types
+          }
+        });
       }
     });
-  }, [onBatch]);
+  }, [onBatch]);  // Re-run whenever `onBatch` changes
 
   // Handling RPC actions (pause, resume, etc.)
   const postRPC = async (body: any) => {
@@ -81,17 +94,17 @@ export default function Page() {
       <div className="grid grid-cols-2 gap-6">
         {/* Left side: Images and Labels */}
         <div>
-          <ImageGrid title="Images" images={viewRef.current.images} />
-          <LabelGrid title="Predictions" items={viewRef.current.preds} />
-          <LabelGrid title="Ground Truth" items={viewRef.current.labels} />
+          <ImageGrid title="Images" images={images} />
+          <LabelGrid title="Predictions" items={preds} />
+          <LabelGrid title="Ground Truth" items={labels} />
           <h3 className="text-sm font-medium mb-2">Loss</h3>
-            <LossChart points={viewRef.current.loss} />
+          <LossChart points={loss} />  {/* Loss chart now updates in real time */}
         </div>
 
         {/* Right side: Loss chart */}
         <div>
           <section className="mt-4 ml-10">
-            
+            {/* You can add additional UI components here */}
           </section>
         </div>
       </div>
