@@ -4,7 +4,8 @@
     "@fontsource/geist-mono": "^5.2.7",
     "chart.js": "^4.5.1",
     "react-chartjs-2": "^5.3.1",
-    "recharts": "^3.5.1"
+    "recharts": "^3.5.1",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/react": "^19.2.7"
